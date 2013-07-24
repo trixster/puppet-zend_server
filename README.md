@@ -3,10 +3,12 @@ Zend Server Puppet Module
 
 A puppet module for [Zend Server](http://www.zend.com/en/products/server/)
 
+Find it on [PuppetForge](https://forge.puppetlabs.com/mwillbanks/zend_server)
+
 Introduction
 ------------
 
-The Zend Server module by default does not provide any repositories so that
+The Zend Server module by default *does not provide any repositories* so that
 setup must be done in advance.  You should follow the documentation on setting
 up your repositories.
 
