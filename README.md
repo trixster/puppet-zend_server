@@ -61,6 +61,7 @@ extension and creates a configuration file in conf.d with the extension name and
 provides the enabling of the extension.
 
 * Default Extension Installation
+
         zend_server::extension { "bzip":
             extension => 'bzip',
         }
@@ -74,6 +75,7 @@ without having to touch the main php.ini file for example the date.timezone
 configuration.
 
 * Example of creating conf.d/date.ini
+
         zend_server::ini { "date":
             options => { 'date.timezone' => 'UTC', },
             target  => 'date',
