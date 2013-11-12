@@ -13,8 +13,8 @@
 # [*zs_version*]
 #   The Zend Server version to use
 #
-# [*web_server*]
-#   The web server package name
+# [*nginx*]
+#   Use the nginx web server package, default apache
 #
 # [*common_ext*]
 #   Use the common extensions
@@ -29,64 +29,113 @@
 class zend_server (
     $php_version = $zend_server::params::php_version,
     $zs_version  = $zend_server::params::zs_version,
-    $web_server  = $zend_server::params::web_server,
+    $nginx  = $zend_server::params::nginx,
     $common_ext  = $zend_server::params::common_ext,
     $extra_ext   = $zend_server::params::extra_ext,
     $unix_ext    = $zend_server::params::unix_ext
 ) inherits zend_server::params {
 
-    package { $web_server:
-        ensure => 'present',
-        name   => $web_server,
+
+    #########################
+    # set repositories
+    #########################
+
+    zend_server::repo { 'repo':
+      zs_version   => $zs_version,
+      # subscribe => Notify['variables'],
     }
 
-    package { "zend-server-php-${php_version}-${zs_version}":
-        ensure => 'present',
-        name   => "zend-server-php-${php_version}-${zs_version}",
+
+    ############################
+    # set Package and install
+    ############################
+  
+    zend_server::package { 'package':
+      zs_version    => $zs_version,    
+      php_version   => $php_version,
+      nginx         => $nginx,
+      # subscribe   => Zendserver::Repo['repo'],
     }
 
-    $common_ensure = $zend_server::common_ext ? {
-        true  => 'present',
-        false => 'absent',
-    }
-    package { "php-${php_version}-common-extensions-zend-server":
-        ensure  => $common_ensure,
-        name    => "php-${php_version}-common-extensions-zend-server",
-        require => Package["zend-server-php-${php_version}-${zs_version}"],
+
+    #########################
+    # set firewall rules
+    #########################
+
+    zend_server::firewall { 'firewall':
     }
 
-    $extra_ensure = $zend_server::extra_ext ? {
-        true  => 'present',
-        false => 'absent',
-    }
-    package { "php-${php_version}-extra-extensions-zend-server":
-        ensure  => $extra_ensure,
-        name    => "php-${php_version}-extra-extensions-zend-server",
-        require => Package["zend-server-php-${php_version}-${zs_version}"],
-    }
 
-    $unix_ensure = $zend_server::unix_ext ? {
-        true  => 'present',
-        false => 'absent',
+    # #########################
+    #  Set configuration
+    ###########################
+  
+    class { 'config':
+        install_path   => $zend_server::params::install_path,
+        default_vhost  => $zend_server::params::default_vhost,
+        adminPassword  => $zend_server::params::admin_password,
+        devPassword    => $zend_server::params::devPassword,
+        orderNumber    => $zend_server::params::orderNumber,
+        licenseKey     => $zend_server::params::licenseKey,
+        acceptEula     => $zend_server::params::acceptEula,
+        appUrl         => $zend_server::params::appUrl,
+        production     => $zend_server::params::production,  
+        # subscribe     => Zendserver::Package['package'],
     }
-    package { "php-${php_version}-unix-extensions-zend-server":
-        ensure  => $unix_ensure,
-        name    => "php-${php_version}-unix-extensions-zend-server",
-        require => Package["zend-server-php-${php_version}-${zs_version}"],
-    }
+  
+    Zend_server::Repo['repo']->Zend_server::Package['package']->Class['config']
+  # restart zend-server service
+  # zendserver::service 
 
-    file { "/etc/profile.d/zend-server.sh":
-        mode   => 755,
-        owner  => root,
-        group  => root,
-        source => "puppet:///modules/zend_server/zend-server.sh",
-    }
 
-    service { 'zend-server':
-        ensure     => 'running',
-        enable     => true,
-        hasstatus  => true,
-        hasrestart => true,
-        require    => Package["zend-server-php-${php_version}-${zs_version}"],
-    }
+
+    #package { "zend-server-php-${php_version}-${zs_version}":
+    #    ensure => 'present',
+    #    name   => "zend-server-php-${php_version}-${zs_version}",
+    #}
+
+    # $common_ensure = $zend_server::common_ext ? {
+    #     true  => 'present',
+    #     false => 'absent',
+    # }
+    # package { "php-${php_version}-common-extensions-zend-server":
+    #     ensure  => $common_ensure,
+    #     name    => "php-${php_version}-common-extensions-zend-server",
+    #     require => Package["zend-server-php-${php_version}-${zs_version}"],
+    # }
+
+    # $extra_ensure = $zend_server::extra_ext ? {
+    #     true  => 'present',
+    #     false => 'absent',
+    # }
+    # package { "php-${php_version}-extra-extensions-zend-server":
+    #     ensure  => $extra_ensure,
+    #     name    => "php-${php_version}-extra-extensions-zend-server",
+    #     require => Package["zend-server-php-${php_version}-${zs_version}"],
+    # }
+
+    # $unix_ensure = $zend_server::unix_ext ? {
+    #     true  => 'present',
+    #     false => 'absent',
+    # }
+    # package { "php-${php_version}-unix-extensions-zend-server":
+    #     ensure  => $unix_ensure,
+    #     name    => "php-${php_version}-unix-extensions-zend-server",
+    #     require => Package["zend-server-php-${php_version}-${zs_version}"],
+    # }
+
+    # file { "/etc/profile.d/zend-server.sh":
+    #     mode   => 755,
+    #     owner  => root,
+    #     group  => root,
+    #     source => "puppet:///modules/zend_server/zend-server.sh",
+    # }
+
+    # service { 'zend-server':
+    #     ensure     => 'running',
+    #     enable     => true,
+    #     hasstatus  => true,
+    #     hasrestart => true,
+    #     require    => Package["zend-server-php-${php_version}-${zs_version}"],
+    # }
 }

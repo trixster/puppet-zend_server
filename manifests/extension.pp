@@ -28,7 +28,7 @@ define zend_server::extension (
         ensure  => 'present',
         name    => "php-${php_version}-${extension}-zend-server",
         notify  => Service['zend-server'],
-        require => Package["zend-server-php-${php_version}-${zs_version}"]
+        require => Package["zend-server-php-${php_version}"]
     }
 
     zend_server::ini { $extension:

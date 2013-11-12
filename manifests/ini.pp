@@ -32,6 +32,6 @@ define zend_server::ini (
         ensure  => 'present',
         content => template('zend_server/ini.erb'),
         notify  => Service['zend-server'],
-        require => Package["zend-server-php-${php_version}-${zs_version}"]
+        require => Package["zend-server-php-${php_version}"]
     }
 }
